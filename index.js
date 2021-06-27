@@ -1,7 +1,8 @@
-fs = require('fs');
+const fs = require('fs');
+
+const yamlFront = require('yaml-front-matter');
 
 const tagMatch = /(\s*)(```) *(\w+) *\n?([\s\S]+?)\s*(\2)(\n+|$)/gm;
-
 
 /**
  *
@@ -29,10 +30,16 @@ function processChapter(arr, handler) {
 function transformRawMd(mdContent, handler) {
     // front matters
     if (mdContent.startsWith("---")) {
-
+        var loadFront = yamlFront.loadFront(mdContent);
+        if (loadFront){
+            mdContent = loadFront['__content']
+            if (handler && handler.frontMatters){
+                mdContent = handler.frontMatters.call(null, mdContent, loadFront)
+            }
+        }
     }
     if (!handler) {
-        LOGD("no js plugin found.")
+        LOGD("no plugin found.")
         return mdContent
     }
     // console.error("processing " + mdContent)

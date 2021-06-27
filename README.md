@@ -11,6 +11,11 @@ A bridge between rust and NodeJS for mdbook.
 mdBook-preprocessor(rust) --(stdin json)--> mdbook-node-wrapper(nodejs, with plugins) --(stdout json)--> modified files
 ```
 
+Features:
+* custom fragment handler
+* inject front matters into
+
+
 ## Usage
 
 
@@ -41,3 +46,5 @@ module.exports = {
 
 ## TODO & Problems
 * no cache now.
+* add tags page
+* add tokenize(dict from tags)
