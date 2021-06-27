@@ -1,0 +1,39 @@
+[
+  {
+    "root": "/Users/xxx/test",
+    "config": {
+      "book": {
+        "authors": [
+          "test"
+        ],
+        "language": "en",
+        "multilingual": false,
+        "src": "src",
+        "title": "y"
+      },
+      "preprocessor": {
+        "node-wrapper": {}
+      }
+    },
+    "renderer": "html",
+    "mdbook_version": "0.4.10"
+  },
+  {
+    "sections": [
+      {
+        "Chapter": {
+          "name": "Chapter 1",
+          "content": "# Chapter 1\n",
+          "number": [
+            1
+          ],
+          "sub_items": [],
+          "path": "chapter_1.md",
+          "source_path": "chapter_1.md",
+          "parent_names": []
+        }
+      }
+    ],
+    "__non_exhaustive": null
+  }
+]

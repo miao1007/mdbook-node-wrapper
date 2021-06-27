@@ -27,9 +27,10 @@ npm install -g mdbook-node-wrapper
 
 Add following your book.toml
 
-```toml
+```sh
+cat >> book.toml << EOF
 [preprocessor.node-wrapper]
-require = "plugin/node-wrapper"
+EOF
 ```
 
 Create a js for markdown fragment handling

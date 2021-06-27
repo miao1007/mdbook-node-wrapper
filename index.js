@@ -64,6 +64,7 @@ function LOGD(msg) {
 }
 
 function main() {
+    LOGD("Start")
     var stdinBuffer;
     try {
         stdinBuffer = fs.readFileSync(process.stdin.fd, "utf8");
@@ -72,10 +73,15 @@ function main() {
         process.exit(1)
     }
     var json;
+    var text = stdinBuffer.trim();
     try {
-        json = JSON.parse(stdinBuffer.trim())
+        json = JSON.parse(text)
     } catch (e) {
-        // it may be called twice when not ready
+        if (text.length < 5){
+            // it may be called twice when not ready
+        } else {
+            LOGD("Parse json failed " + text)
+        }
         process.exit(0)
     }
     console.assert(json && json.length === 2)
