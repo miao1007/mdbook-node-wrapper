@@ -67,9 +67,11 @@ function main() {
     LOGD("Start")
     var stdinBuffer;
     try {
+        // read data sent from mdbook
+        // see https://rust-lang.github.io/mdBook/for_developers/preprocessors.html
         stdinBuffer = fs.readFileSync(process.stdin.fd, "utf8");
     } catch (e) {
-        LOGD("Stdin read failed")
+        LOGD("Stdin read failed: " +  e.message)
         process.exit(1)
     }
     var json;
@@ -79,10 +81,11 @@ function main() {
     } catch (e) {
         if (text.length < 5){
             // it may be called twice when not ready
+            process.exit(0)
         } else {
             LOGD("Parse json failed " + text)
+            process.exit(1)
         }
-        process.exit(0)
     }
     console.assert(json && json.length === 2)
     let config = json[0]
