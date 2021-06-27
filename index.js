@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const fs = require('fs');
 
 const yamlFront = require('yaml-front-matter');
@@ -12,7 +13,7 @@ const tagMatch = /(\s*)(```) *(\w+) *\n?([\s\S]+?)\s*(\2)(\n+|$)/gm;
 function processChapter(arr, handler) {
     for (let item of arr) {
         chapter = item['Chapter']
-        var subItems = chapter.sub_items;
+        var subItems = chapter['sub_items'];
         if (subItems instanceof Array && subItems.length > 0) {
             processChapter(subItems, handler);
         } else {
@@ -31,21 +32,16 @@ function transformRawMd(mdContent, handler) {
     // front matters
     if (mdContent.startsWith("---")) {
         var loadFront = yamlFront.loadFront(mdContent);
-        if (loadFront){
+        if (loadFront) {
             mdContent = loadFront['__content']
-            if (handler && handler.frontMatters){
+            if (handler && handler.frontMatters) {
                 mdContent = handler.frontMatters.call(null, mdContent, loadFront)
             }
         }
     }
-    if (!handler) {
-        LOGD("no plugin found.")
-        return mdContent
-    }
     // console.error("processing " + mdContent)
     return mdContent.replace(tagMatch, function (match, v1, v2, v3, v4) {
         if (handler[v3] && handler[v3].call) {
-            LOGD(v4)
             return "<p>" + handler[v3].call(null, v4) + "</p>";
         } else {
             return match;
@@ -56,6 +52,8 @@ function transformRawMd(mdContent, handler) {
 function processContent(book, handler) {
     if (book['sections']) {
         processChapter(book['sections'], handler)
+    } else {
+        LOGD("Sections seems empty.")
     }
 }
 
@@ -66,7 +64,13 @@ function LOGD(msg) {
 }
 
 function main() {
-    var stdinBuffer = fs.readFileSync(process.stdin.fd, "utf8");
+    var stdinBuffer;
+    try {
+        stdinBuffer = fs.readFileSync(process.stdin.fd, "utf8");
+    } catch (e) {
+        LOGD("Stdin read failed")
+        process.exit(1)
+    }
     var json;
     try {
         json = JSON.parse(stdinBuffer.trim())
@@ -77,7 +81,14 @@ function main() {
     console.assert(json && json.length === 2)
     let config = json[0]
     let book = json[1]
-    const handler = require(config.root + '/' + (config.config.preprocessor['node-wrapper'].require) || "plugin/node-wrapper")
+    var handler;
+    try {
+        var customDir = config.root + '/' + 'plugin/node-wrapper';
+        handler = require(customDir)
+    } catch (e) {
+        LOGD("No js fond in " + customDir + ", using build-in node-wrapper")
+        handler = require(__dirname + "/buildin/node-wrapper")
+    }
     processContent(book, handler)
     console.log(JSON.stringify(book))
     LOGD("End")

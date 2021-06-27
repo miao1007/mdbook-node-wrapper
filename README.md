@@ -1,6 +1,6 @@
 
-[![version](https://img.shields.io/npm/v/hexo-filter-kroki.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
-[![download](https://img.shields.io/npm/dm/hexo-filter-kroki.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
+[![version](https://img.shields.io/npm/v/mdbook-node-wrapper.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
+[![download](https://img.shields.io/npm/dm/mdbook-node-wrapper.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
 
 
 ##  mdbook-node-wrapper
@@ -45,6 +45,6 @@ module.exports = {
 ```
 
 ## TODO & Problems
-* no cache now.
+* no cache now. bring node_modules back
 * add tags page
 * add tokenize(dict from tags)

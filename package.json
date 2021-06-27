@@ -9,6 +9,9 @@
   "keywords": [
     "mdbook"
   ],
+  "bin": {
+    "mdbook-node-wrapper": "./index.js"
+  },
   "dependencies": {
     "yaml-front-matter": "^4.1.1"
   },
