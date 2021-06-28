@@ -5,42 +5,101 @@ const yamlFront = require('yaml-front-matter');
 
 const tagMatch = /(\s*)(```) *(\w+) *\n?([\s\S]+?)\s*(\2)(\n+|$)/gm;
 
+
+/**
+ * @typedef Chapter
+ * @type {{number: [number], path: string, parent_names: [], sub_items: [], name: string, source_path: string, content: string}}
+ */
+const d = {
+    "name": "Chapter 1",
+    "content": "# Chapter 1\n",
+    "number": [],
+    "sub_items": [],
+    "path": "chapter_1.md",
+    "source_path": "chapter_1.md",
+    "parent_names": []
+}
+
 /**
  *
  * @param{Array} arr
- * @param handler external plugin
+ * @param handler{function<string>} external plugin
  */
-function processChapter(arr, handler) {
+function processNestedItems(arr, handler) {
     for (let item of arr) {
         chapter = item['Chapter']
+        if (!chapter) {
+            continue;
+        }
         var subItems = chapter['sub_items'];
         if (subItems instanceof Array && subItems.length > 0) {
-            processChapter(subItems, handler);
+            processNestedItems(subItems, handler);
         } else {
             LOGD("Processing " + chapter['path'])
-            chapter['content'] = transformRawMd(chapter['content'], handler)
+            transformRawChapter(chapter, handler)
         }
     }
 }
 
+
+var tagClouds = {}
+
+function tagGenerator() {
+    var content = []
+
+    for (var key in tagClouds) {
+        var arr = tagClouds[key];
+        content.push(`<h3 id="${key}"><a href="#${key}" class="header">#${key}</a></h3>`)
+
+        for (var key2 in arr) {
+            var obj = arr[key2];
+            content.push(`<p><a href='${obj.path.replace(".md", ".html")}'>${obj.path.replace(".md", "")}-${obj.name}</a></p>`)
+        }
+    }
+    return {
+        "name": "Tags",
+        "content": content.join("\n"),
+        "number": null,
+        "sub_items": [],
+        "path": "tags.md",
+        "source_path": "tags.md",
+        "parent_names": []
+    }
+}
+
+
 /**
  * decorate the raw markdown file
- * @param{String} mdContent
- * @param handler external plugin
+ * @param chapter{Chapter}
+ * @param handler{function<string>} external plugin
  */
-function transformRawMd(mdContent, handler) {
+function transformRawChapter(chapter, handler) {
+    var mdContent = chapter['content']
     // front matters
     if (mdContent.startsWith("---")) {
-        var loadFront = yamlFront.loadFront(mdContent);
-        if (loadFront) {
-            mdContent = loadFront['__content']
+        var frontMatters = yamlFront.loadFront(mdContent);
+        if (frontMatters) {
+            if (frontMatters.tags) {
+                frontMatters.tags.forEach(x => {
+                    var tagObj = {
+                        name: chapter.name,
+                        path: chapter.path
+                    }
+                    if (tagClouds[x]) {
+                        tagClouds[x].push(tagObj)
+                    } else {
+                        tagClouds[x] = [tagObj]
+                    }
+                })
+            }
+            mdContent = frontMatters['__content']
             if (handler && handler.frontMatters) {
-                mdContent = handler.frontMatters.call(null, mdContent, loadFront)
+                mdContent = handler.frontMatters.call(null, mdContent, frontMatters)
             }
         }
     }
     // console.error("processing " + mdContent)
-    return mdContent.replace(tagMatch, function (match, v1, v2, v3, v4) {
+    chapter['content'] = mdContent.replace(tagMatch, function (match, v1, v2, v3, v4) {
         if (handler[v3] && handler[v3].call) {
             return "<p>" + handler[v3].call(null, v4) + "</p>";
         } else {
@@ -49,18 +108,31 @@ function transformRawMd(mdContent, handler) {
     });
 }
 
+/**
+ *
+ * @param book
+ * @param handler{function<string>} external plugin
+ */
 function processContent(book, handler) {
     if (book['sections']) {
-        processChapter(book['sections'], handler)
+        processNestedItems(book['sections'], handler)
     } else {
         LOGD("Sections seems empty.")
     }
 }
 
+/**
+ * @param msg{string}
+ */
 function LOGD(msg) {
     var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
     var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().replace(/T/, ' ').replace(/\..+/, '')
-    console.error(localISOTime + " [INFO] (mdbook::mdbook-node-wrapper): " + msg)
+    var prefix = localISOTime + " [INFO] (mdbook::mdbook-node-wrapper): "
+    if (!msg instanceof String) {
+        console.error(prefix + JSON.stringify(json, null, 2))
+    } else {
+        console.error(prefix + msg)
+    }
 }
 
 function main() {
@@ -71,7 +143,7 @@ function main() {
         // see https://rust-lang.github.io/mdBook/for_developers/preprocessors.html
         stdinBuffer = fs.readFileSync(process.stdin.fd, "utf8");
     } catch (e) {
-        LOGD("Stdin read failed: " +  e.message)
+        LOGD("Stdin read failed: " + e.message)
         process.exit(1)
     }
     var json;
@@ -79,7 +151,7 @@ function main() {
     try {
         json = JSON.parse(text)
     } catch (e) {
-        if (text.length < 5){
+        if (text.length < 5) {
             // it may be called twice when not ready
             process.exit(0)
         } else {
@@ -99,6 +171,11 @@ function main() {
         handler = require(__dirname + "/buildin/node-wrapper")
     }
     processContent(book, handler)
+    var tags = tagGenerator()
+    book['sections'].push("Separator")
+    book['sections'].push({
+        Chapter: tags
+    })
     console.log(JSON.stringify(book))
     LOGD("End")
 }

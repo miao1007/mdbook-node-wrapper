@@ -22,7 +22,7 @@ Features:
 First install bin
 
 ```sh
-npm install -g mdbook-node-wrapper
+npm install -g https://github.com/miao1007/mdbook-node-wrapper.git
 ```
 
 Add following your book.toml
