@@ -2,18 +2,20 @@
 [![version](https://img.shields.io/npm/v/mdbook-node-wrapper.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
 [![download](https://img.shields.io/npm/dm/mdbook-node-wrapper.svg)](https://www.npmjs.com/package/mdbook-node-wrapper)
 
+> Current API is not stable.
 
 ##  mdbook-node-wrapper
 
 A bridge between rust and NodeJS for mdbook.
 
 ```
-mdBook-preprocessor(rust) --(stdin json)--> mdbook-node-wrapper(nodejs, with plugins) --(stdout json)--> modified files
+mdbook-preprocessor(rust) --(stdin)--> mdbook-node-wrapper --(stdout)--> modified files
 ```
 
 Features:
 * custom fragment handler
 * inject front matters into
+* add tags page
 
 
 ## Usage
@@ -47,5 +49,4 @@ module.exports = {
 
 ## TODO & Problems
 * no cache now. bring node_modules back
-* add tags page
 * add tokenize(dict from tags)

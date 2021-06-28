@@ -44,29 +44,6 @@ function processNestedItems(arr, handler) {
 
 var tagClouds = {}
 
-function tagGenerator() {
-    var content = []
-
-    for (var key in tagClouds) {
-        var arr = tagClouds[key];
-        content.push(`<h3 id="${key}"><a href="#${key}" class="header">#${key}</a></h3>`)
-
-        for (var key2 in arr) {
-            var obj = arr[key2];
-            content.push(`<p><a href='${obj.path.replace(".md", ".html")}'>${obj.path.replace(".md", "")}-${obj.name}</a></p>`)
-        }
-    }
-    return {
-        "name": "Tags",
-        "content": content.join("\n"),
-        "number": null,
-        "sub_items": [],
-        "path": "tags.md",
-        "source_path": "tags.md",
-        "parent_names": []
-    }
-}
-
 
 /**
  * decorate the raw markdown file
@@ -160,22 +137,20 @@ function main() {
         }
     }
     console.assert(json && json.length === 2)
-    let config = json[0]
+    let first = json[0]
     let book = json[1]
     var handler;
     try {
-        var customDir = config.root + '/' + 'plugin/node-wrapper';
+        var customDir = first.root + '/' + 'plugin/node-wrapper';
         handler = require(customDir)
     } catch (e) {
         LOGD("No js fond in " + customDir + ", using build-in node-wrapper")
         handler = require(__dirname + "/buildin/node-wrapper")
     }
     processContent(book, handler)
-    var tags = tagGenerator()
-    book['sections'].push("Separator")
-    book['sections'].push({
-        Chapter: tags
-    })
+    if (handler.tagHandler && handler.tagHandler.call) {
+        handler.tagHandler.call(null, first.config, book, tagClouds)
+    }
     console.log(JSON.stringify(book))
     LOGD("End")
 }
