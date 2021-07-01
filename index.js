@@ -31,12 +31,12 @@ function processNestedItems(arr, handler) {
         if (!chapter) {
             continue;
         }
+        if (chapter['content']) {
+            transformRawChapter(chapter, handler)
+        }
         var subItems = chapter['sub_items'];
         if (subItems instanceof Array && subItems.length > 0) {
             processNestedItems(subItems, handler);
-        } else {
-            LOGD("Processing " + chapter['path'])
-            transformRawChapter(chapter, handler)
         }
     }
 }
@@ -52,6 +52,7 @@ var tagClouds = {}
  */
 function transformRawChapter(chapter, handler) {
     var mdContent = chapter['content']
+    LOGD("Processing " + chapter['path'])
     // front matters
     if (mdContent.startsWith("---")) {
         var frontMatters = yamlFront.loadFront(mdContent);
@@ -62,8 +63,9 @@ function transformRawChapter(chapter, handler) {
                         name: chapter.name,
                         path: chapter.path
                     }
-                    if (tagClouds[x]) {
-                        tagClouds[x].push(tagObj)
+                    var tagCloud = tagClouds[x];
+                    if (tagCloud) {
+                        tagCloud.push(tagObj)
                     } else {
                         tagClouds[x] = [tagObj]
                     }
