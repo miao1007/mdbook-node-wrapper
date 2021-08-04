@@ -24,19 +24,20 @@ const d = {
  *
  * @param{Array} arr
  * @param handler{function<string>} external plugin
+ * @param config book config
  */
-function processNestedItems(arr, handler) {
+function processNestedItems(arr, handler, config) {
     for (let item of arr) {
         chapter = item['Chapter']
         if (!chapter) {
             continue;
         }
         if (chapter['content']) {
-            transformRawChapter(chapter, handler)
+            transformRawChapter(chapter, handler, config)
         }
         var subItems = chapter['sub_items'];
         if (subItems instanceof Array && subItems.length > 0) {
-            processNestedItems(subItems, handler);
+            processNestedItems(subItems, handler, config);
         }
     }
 }
@@ -49,8 +50,9 @@ var tagClouds = {}
  * decorate the raw markdown file
  * @param chapter{Chapter}
  * @param handler{function<string>} external plugin
+ * @param config
  */
-function transformRawChapter(chapter, handler) {
+function transformRawChapter(chapter, handler, config) {
     var mdContent = chapter['content']
     LOGD("Processing " + chapter['path'])
     // front matters
@@ -63,6 +65,7 @@ function transformRawChapter(chapter, handler) {
                         name: chapter.name,
                         path: chapter.path
                     }
+                    
                     var tagCloud = tagClouds[x];
                     if (tagCloud) {
                         tagCloud.push(tagObj)
@@ -73,7 +76,7 @@ function transformRawChapter(chapter, handler) {
             }
             mdContent = frontMatters['__content']
             if (handler && handler.frontMatters) {
-                mdContent = handler.frontMatters.call(null, mdContent, frontMatters)
+                mdContent = handler.frontMatters.call(null, mdContent, frontMatters, config)
             }
         }
     }
@@ -92,9 +95,9 @@ function transformRawChapter(chapter, handler) {
  * @param book
  * @param handler{function<string>} external plugin
  */
-function processContent(book, handler) {
+function processContent(book, handler, first) {
     if (book['sections']) {
-        processNestedItems(book['sections'], handler)
+        processNestedItems(book['sections'], handler, first)
     } else {
         LOGD("Sections seems empty.")
     }
@@ -107,8 +110,8 @@ function LOGD(msg) {
     var tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
     var localISOTime = (new Date(Date.now() - tzoffset)).toISOString().replace(/T/, ' ').replace(/\..+/, '')
     var prefix = localISOTime + " [INFO] (mdbook::mdbook-node-wrapper): "
-    if (!msg instanceof String) {
-        console.error(prefix + JSON.stringify(json, null, 2))
+    if (msg instanceof Object) {
+        console.error(prefix + JSON.stringify(msg, null, 2))
     } else {
         console.error(prefix + msg)
     }
@@ -143,13 +146,14 @@ function main() {
     let book = json[1]
     var handler;
     try {
+        // try load from mdbook plugin
         var customDir = first.root + '/' + 'plugin/node-wrapper';
         handler = require(customDir)
     } catch (e) {
         LOGD("No js fond in " + customDir + ", using build-in node-wrapper")
         handler = require(__dirname + "/buildin/node-wrapper")
     }
-    processContent(book, handler)
+    processContent(book, handler, first.config) 
     if (handler.tagHandler && handler.tagHandler.call) {
         handler.tagHandler.call(null, first.config, book, tagClouds)
     }

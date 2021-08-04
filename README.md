@@ -48,5 +48,6 @@ module.exports = {
 ```
 
 ## TODO & Problems
-* no cache now. bring node_modules back
+* no cache now. 
+* bring node_modules back
 * add tokenize(dict from tags)
